@@ -1,0 +1,59 @@
+eceivers:
+  hostmetrics:
+    collection_interval: 60s
+    scrapers:
+      #cpu:
+      memory:
+      #disk:
+      #filesystem:
+
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  filelog:
+    include: [ /home/philwhite/Documents/python/testing/log.txt ]
+    start_at: end
+    operators:
+      - type: regex_parser
+        regex: '^(?P<timestamp>\d{10}) (?P<severity>[A-Z]*) (?P<message>.*)$'
+        timestamp:
+          parse_from: timestamp
+          layout_type: epoch
+          layout: s
+        severity:
+          parse_from: severity
+
+exporters:
+  logging:
+    loglevel: debug
+  otlp:
+    endpoint: localhost:7777
+    insecure: true
+  otlphttp:
+    endpoint: http://localhost:7777
+    insecure: true
+
+processors:
+  batch:
+  resource:
+    attributes:
+    - key: host.name
+      action: insert
+      value: white05
+    - key: deployment.environment
+      action: insert
+      value: development
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch,resource]
+      exporters: [otlp]
+    logs:
+      receivers: [filelog]
+      processors: [batch,resource]
+      exporters: [otlp]
