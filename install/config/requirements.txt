@@ -1,0 +1,12 @@
+Flask==2.0.1
+grpcio==1.39.0
+grpcio-tools==1.39.0
+Jinja2==3.0.1
+opentelemetry-api==1.4.1
+opentelemetry-distro==0.23b2
+opentelemetry-instrumentation==0.23b2
+opentelemetry-proto==1.4.1
+opentelemetry-sdk==1.4.1
+opentelemetry-semantic-conventions==0.23b2
+protobuf==3.17.3
+PyMySQL==1.0.2
