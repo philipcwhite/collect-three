@@ -14,7 +14,7 @@ eceivers:
       http:
         endpoint: 0.0.0.0:4318
   filelog:
-    include: [ /home/philwhite/Documents/python/testing/log.txt ]
+    include: [ /home/philwhite/Documents/python/test/log.txt ]
     start_at: end
     operators:
       - type: regex_parser
