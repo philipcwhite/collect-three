@@ -26,10 +26,12 @@ def create_log_attribute(key, value):
  
 def create_log(log_name, log_severity, log_body, log_attributes, resource_attributes):
     '''Assembles metric for export'''
-    for k, v in resource_attributes.items():
-        create_resource_attribute(k, v)
-    for k, v in log_attributes.items():
-        create_log_attribute(k, v)
+    if not resource_attributes is None:
+        for k, v in resource_attributes.items():
+            create_resource_attribute(k, v)
+    if not log_attributes is None:
+        for k, v in log_attributes.items():
+            create_log_attribute(k, v)
     my_log.name = log_name
     my_log.body.string_value = log_body
     my_log.severity_text = log_severity
@@ -40,7 +42,7 @@ def create_log(log_name, log_severity, log_body, log_attributes, resource_attrib
     my_exportlogsservicerequest.resource_logs.extend([my_resourcelogs])
     return my_exportlogsservicerequest
  
-def record(log_name, log_severity, log_body, log_attributes, resource_attributes):
+def record(log_name, log_severity, log_body, log_attributes = None, resource_attributes = None):
     with grpc.insecure_channel('localhost:4317') as channel:
         stub = logs_service_pb2_grpc.LogsServiceStub(channel)
         response = stub.Export(create_log(log_name, log_severity, log_body, log_attributes, resource_attributes))
