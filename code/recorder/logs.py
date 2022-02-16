@@ -44,9 +44,13 @@ def create_log(log_name, log_severity, log_body, log_attributes, resource_attrib
  
 def record(log_name, log_severity, log_body, log_attributes = None, resource_attributes = None):
     with grpc.insecure_channel('localhost:4317') as channel:
-        stub = logs_service_pb2_grpc.LogsServiceStub(channel)
-        response = stub.Export(create_log(log_name, log_severity, log_body, log_attributes, resource_attributes))
-    print(response)
+        try:
+            stub = logs_service_pb2_grpc.LogsServiceStub(channel)
+            response = stub.Export(create_log(log_name, log_severity, log_body, log_attributes, resource_attributes))
+        except:
+            print("Error connecting to GRPC Endpoint.")
+        finally:
+            print("Data Sent.")
 
 if __name__ == '__main__':
     record()
