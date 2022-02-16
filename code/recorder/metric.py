@@ -42,9 +42,13 @@ def create_metric(metric_name, metric_description, metric_unit, metric_value, me
  
 def record(metric_name, metric_description, metric_unit, metric_value, metric_attributes):
     with grpc.insecure_channel('localhost:4317') as channel:
-        stub = metrics_service_pb2_grpc.MetricsServiceStub(channel)
-        response = stub.Export(create_metric(metric_name, metric_description, metric_unit, metric_value, metric_attributes))
-    print(response)
+        try:
+            stub = metrics_service_pb2_grpc.MetricsServiceStub(channel)
+            response = stub.Export(create_metric(metric_name, metric_description, metric_unit, metric_value, metric_attributes))
+        except:
+            print("Error connecting to GRPC Endpoint.")
+        finally:
+            print("Data Sent.")        
 
 if __name__ == '__main__':
     record()
