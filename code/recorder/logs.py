@@ -50,7 +50,9 @@ def record(log_name, log_severity, log_body, log_attributes = None, resource_att
         except:
             print("Error connecting to GRPC Endpoint.")
         finally:
-            print("Data Sent.")
+            my_log.Clear()
+            my_log_attribute.Clear()
+            my_resource_attribute.Clear()
 
 if __name__ == '__main__':
     record()
