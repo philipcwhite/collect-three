@@ -48,7 +48,8 @@ def record(metric_name, metric_description, metric_unit, metric_value, metric_at
         except:
             print("Error connecting to GRPC Endpoint.")
         finally:
-            print("Data Sent.")        
+            my_metric.Clear()
+            my_resource_attribute.Clear()     
 
 if __name__ == '__main__':
     record()
