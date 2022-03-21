@@ -1,11 +1,17 @@
-from opentelemetry.proto.logs.v1.logs_pb2 import LogRecord, InstrumentationLibraryLogs, ResourceLogs
+from opentelemetry.proto.logs.v1.logs_pb2 import LogRecord, InstrumentationLibraryLogs, ResourceLogs, LogsData
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
-from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import ExportLogsServiceRequest
 import opentelemetry.proto.collector.logs.v1.logs_service_pb2_grpc as logs_service_pb2_grpc
 import time, grpc
 
 # Instantiate Classes
-my_exportlogsservicerequest = ExportLogsServiceRequest()
+my_logs_data = None
+my_resourcelogs = None
+my_instrumentationlibrarylogs = None
+my_log = None
+my_resource_attribute = None
+my_log_attribute = None
+
+my_logs_data = LogsData()
 my_resourcelogs = ResourceLogs()
 my_instrumentationlibrarylogs = InstrumentationLibraryLogs()
 my_log = LogRecord()
@@ -25,7 +31,7 @@ def create_log_attribute(key, value):
     my_log.attributes.extend([my_log_attribute])
  
 def create_log(log_name, log_severity, log_body, log_attributes, resource_attributes):
-    '''Assembles metric for export'''
+    '''Assembles log for export'''
     if not resource_attributes is None:
         for k, v in resource_attributes.items():
             create_resource_attribute(k, v)
@@ -39,8 +45,8 @@ def create_log(log_name, log_severity, log_body, log_attributes, resource_attrib
     my_log.time_unix_nano = int(time.time()*1000000000)   
     my_instrumentationlibrarylogs.log_records.extend([my_log])  
     my_resourcelogs.instrumentation_library_logs.extend([my_instrumentationlibrarylogs])
-    my_exportlogsservicerequest.resource_logs.extend([my_resourcelogs])
-    return my_exportlogsservicerequest
+    my_logs_data.resource_logs.extend([my_resourcelogs])
+    return my_logs_data
  
 def record(log_name, log_severity, log_body, log_attributes = None, resource_attributes = None):
     with grpc.insecure_channel('localhost:4317') as channel:
@@ -50,6 +56,7 @@ def record(log_name, log_severity, log_body, log_attributes = None, resource_att
         except:
             print("Error connecting to GRPC Endpoint.")
         finally:
+            print("Data Sent.")
             my_log.Clear()
             my_log_attribute.Clear()
             my_resource_attribute.Clear()
