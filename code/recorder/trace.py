@@ -7,28 +7,28 @@ import time, grpc
 my_resource_spans = None
 my_instrumentation_library_spans = None
 my_span = None
-my_resource_attributes = None
-my_span_attributes = None
+my_resource_attribute = None
+my_span_attribute = None
 my_trace_data = None
 
 my_resource_spans = ResourceSpans() #Span Resource Attributes
 my_instrumentation_library_spans = InstrumentationLibrarySpans() #Group for multiple spans [list]
 my_span = Span() # Creates the span and parameters in span: trace_id, span_id, kind, name, start_time_unix_nano, end_time_unix_nano, attributes 
-my_resource_attributes = KeyValue() #Trace Key Value Pair
-my_span_attributes = KeyValue() #Span Resource Attributes
+my_resource_attribute = KeyValue() #Trace Key Value Pair
+my_span_attribute = KeyValue() #Span Resource Attributes
 my_trace_data = TracesData() # Top Level Traces
 
 def create_resource_attribute(key, value):  
     '''Create Resource Attribute'''
-    my_resource_attributes.key = key
-    my_resource_attributes.value.string_value = value
-    my_resource_spans.resource.attributes.extend([my_resource_attributes])
+    my_resource_attribute.key = key
+    my_resource_attribute.value.string_value = value
+    my_resource_spans.resource.attributes.extend([my_resource_attribute])
 
 def create_span_attribute(key, value):  
     '''Create Resource Attribute'''
-    my_span_attributes.key = key
-    my_span_attributes.value.string_value = value
-    my_span.attributes.extend([my_span_attributes])
+    my_span_attribute.key = key
+    my_span_attribute.value.string_value = value
+    my_span.attributes.extend([my_span_attribute])
 
 def create_instrumentation_library_spans(trace_name, start_time_unix_nano, end_time_unix_nano, span_attributes):
     # Create Span
@@ -77,8 +77,10 @@ def record(trace_name, start_time_unix_nano, end_time_unix_nano, span_attributes
         finally:
             print("Data Sent.")
             my_span.Clear()
-            my_span_attributes.Clear()
-            my_resource_attributes.Clear()
+            my_span_attribute.Clear()
+            my_resource_attribute.Clear()
 
 if __name__ == '__main__':
     record()
+
+#create_trace(trace_name='test', start_time_unix_nano = int(time.time()*1000000000), end_time_unix_nano = int(time.time()*1000000000), span_attributes={'hello':'world','foo':'bar'}, resource_attributes={'hello':'world','foo':'bar'})
