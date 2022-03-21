@@ -1,13 +1,19 @@
-from opentelemetry.proto.metrics.v1.metrics_pb2 import Metric, ResourceMetrics, InstrumentationLibraryMetrics, NumberDataPoint
+from opentelemetry.proto.metrics.v1.metrics_pb2 import Metric, ResourceMetrics, InstrumentationLibraryMetrics, NumberDataPoint, MetricsData
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
-from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import ExportMetricsServiceRequest
 import opentelemetry.proto.collector.metrics.v1.metrics_service_pb2_grpc as metrics_service_pb2_grpc
 import time, grpc
 
 # Instantiate Classes
-my_exportmetricsservicerequest = ExportMetricsServiceRequest()
+my_metrics_data = None
+my_resourcemetrics = None
+my_instrumentation_library_metrics = None
+my_metric = None
+my_number = None
+my_resource_attribute = None
+
+my_metrics_data = MetricsData()
 my_resourcemetrics = ResourceMetrics()
-my_instrumentationlibrarymetrics = InstrumentationLibraryMetrics()
+my_instrumentation_library_metrics = InstrumentationLibraryMetrics()
 my_metric = Metric()
 my_number = NumberDataPoint()
 my_resource_attribute = KeyValue()
@@ -33,14 +39,15 @@ def create_resource_attribute(key, value):
 def create_metric(metric_name, metric_description, metric_unit, metric_value, metric_attributes):
     '''Assembles metric for export'''
     create_datapoint(metric_name, metric_description, metric_unit, metric_value) 
-    for k, v in metric_attributes.items():
-        create_resource_attribute(k, v)
-    my_instrumentationlibrarymetrics.metrics.extend([my_metric])
-    my_resourcemetrics.instrumentation_library_metrics.extend([my_instrumentationlibrarymetrics])
-    my_exportmetricsservicerequest.resource_metrics.extend([my_resourcemetrics])
-    return my_exportmetricsservicerequest
+    if not metric_attributes is None:
+        for k, v in metric_attributes.items():
+            create_resource_attribute(k, v)
+    my_instrumentation_library_metrics.metrics.extend([my_metric])
+    my_resourcemetrics.instrumentation_library_metrics.extend([my_instrumentation_library_metrics])
+    my_metrics_data.resource_metrics.extend([my_resourcemetrics])
+    return my_metrics_data
  
-def record(metric_name, metric_description, metric_unit, metric_value, metric_attributes):
+def record(metric_name, metric_description, metric_unit, metric_value, metric_attributes = None):
     with grpc.insecure_channel('localhost:4317') as channel:
         try:
             stub = metrics_service_pb2_grpc.MetricsServiceStub(channel)
@@ -48,8 +55,10 @@ def record(metric_name, metric_description, metric_unit, metric_value, metric_at
         except:
             print("Error connecting to GRPC Endpoint.")
         finally:
+            print("Data Sent.")
             my_metric.Clear()
-            my_resource_attribute.Clear()     
+            my_number.Clear()
+            my_resource_attribute.Clear() 
 
 if __name__ == '__main__':
     record()
