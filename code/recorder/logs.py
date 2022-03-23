@@ -30,7 +30,7 @@ def create_log_attribute(key, value):
     my_log_attribute.value.string_value = value
     my_log.attributes.extend([my_log_attribute])
  
-def create_log(log_name, log_severity, log_body, log_attributes, resource_attributes):
+def create_log(log_severity, log_body, log_attributes, resource_attributes):
     '''Assembles log for export'''
     if not resource_attributes is None:
         for k, v in resource_attributes.items():
@@ -38,7 +38,6 @@ def create_log(log_name, log_severity, log_body, log_attributes, resource_attrib
     if not log_attributes is None:
         for k, v in log_attributes.items():
             create_log_attribute(k, v)
-    my_log.name = log_name
     my_log.body.string_value = log_body
     my_log.severity_text = log_severity
     #my_log.severity_number = 9
@@ -48,11 +47,11 @@ def create_log(log_name, log_severity, log_body, log_attributes, resource_attrib
     my_logs_data.resource_logs.extend([my_resourcelogs])
     return my_logs_data
  
-def record(log_name, log_severity, log_body, log_attributes = None, resource_attributes = None):
+def record(log_severity, log_body, log_attributes = None, resource_attributes = None):
     with grpc.insecure_channel('localhost:4317') as channel:
         try:
             stub = logs_service_pb2_grpc.LogsServiceStub(channel)
-            response = stub.Export(create_log(log_name, log_severity, log_body, log_attributes, resource_attributes))
+            response = stub.Export(create_log(log_severity, log_body, log_attributes, resource_attributes))
         except:
             print("Error connecting to GRPC Endpoint.")
         finally:
