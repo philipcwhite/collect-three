@@ -1,86 +1,80 @@
-from opentelemetry.proto.trace.v1.trace_pb2 import Span, ResourceSpans, InstrumentationLibrarySpans ,TracesData
+from opentelemetry.proto.trace.v1.trace_pb2 import Span, ResourceSpans, InstrumentationLibrarySpans, TracesData
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
 import opentelemetry.proto.collector.trace.v1.trace_service_pb2_grpc as trace_service_pb2_grpc
-import time, grpc
+import time, grpc, os
 
-# Instantiate Classes
-my_resource_spans = None
-my_instrumentation_library_spans = None
-my_span = None
-my_resource_attribute = None
-my_span_attribute = None
-my_trace_data = None
+class Trace:
+    def __init__(self, name = None, start_time = None, end_time = None, span_attributes = None, resource_attributes = None):
+        self.name = name
+        self.start_time = start_time
+        self.end_time = end_time
+        self.span_attributes = span_attributes
+        self.resource_attributes = resource_attributes
+        self.resource_spans = ResourceSpans() # Span Resource Attributes
+        self.instrumentation_library_spans = InstrumentationLibrarySpans() # Group for multiple spans [list]
+        self.span = Span() # Creates the span and parameters in span: trace_id, span_id, kind, name, start_time_unix_nano, end_time_unix_nano, attributes 
+        self.trace_data = TracesData() # Top Level Traces
+        self.key_value = KeyValue()
+        self.otlp_endpoint = 'localhost:4317'
+        
+        if 'OTLP_ENDPOINT' in os.environ:
+            self.otlp_endpoint = os.environ["OTLP_ENDPOINT"]
 
-my_resource_spans = ResourceSpans() #Span Resource Attributes
-my_instrumentation_library_spans = InstrumentationLibrarySpans() #Group for multiple spans [list]
-my_span = Span() # Creates the span and parameters in span: trace_id, span_id, kind, name, start_time_unix_nano, end_time_unix_nano, attributes 
-my_resource_attribute = KeyValue() #Trace Key Value Pair
-my_span_attribute = KeyValue() #Span Resource Attributes
-my_trace_data = TracesData() # Top Level Traces
+    def __del__(self):
+        self.name = None
+        self.start_time = None
+        self.end_time = None
+        self.span_attributes = None
+        self.resource_attributes = None
+        self.resource_spans = None
+        self.instrumentation_library_spans = None
+        self.span = None
+        self.trace_data = None
+        self.key_value = None
+        self.otlp_endpoint = None
 
-def create_resource_attribute(key, value):  
-    '''Create Resource Attribute'''
-    my_resource_attribute.key = key
-    my_resource_attribute.value.string_value = value
-    my_resource_spans.resource.attributes.extend([my_resource_attribute])
+    def create_key_value(self, key, value):  
+        '''Create Key Value Pair'''
+        self.key_value.key = key
+        self.key_value.value.string_value = value
+        return self.key_value
 
-def create_span_attribute(key, value):  
-    '''Create Resource Attribute'''
-    my_span_attribute.key = key
-    my_span_attribute.value.string_value = value
-    my_span.attributes.extend([my_span_attribute])
-
-def create_instrumentation_library_spans(trace_name, start_time_unix_nano, end_time_unix_nano, span_attributes):
-    # Create Span
-    my_span.trace_id = b'12345'
-    my_span.span_id = b'12345'
-    my_span.parent_span_id = b'1234'
-    my_span.kind = 1 #SPAN_KIND_INTERNAL
-    my_span.name = trace_name
-    my_span.start_time_unix_nano = start_time_unix_nano #int(time.time()*1000000000)
-    my_span.end_time_unix_nano = end_time_unix_nano 
+    def create_trace(self):
+        # Create Span
+        self.span.trace_id = b'12345'
+        self.span.span_id = b'12345'
+        self.span.parent_span_id = b'1234'
+        self.span.kind = 1 #SPAN_KIND_INTERNAL
+        self.span.name = self.name
+        self.span.start_time_unix_nano = self.start_time #int(time.time()*1000000000)
+        self.span.end_time_unix_nano = self.end_time 
    
-    # Add Span Attributes
-    if not span_attributes is None:
-        for k, v in span_attributes.items():
-            create_span_attribute(k, v)
+        # Add Span Attributes
+        if not self.span_attributes is None:
+            for k, v in self.span_attributes.items():
+                self.span.attributes.extend([self.create_key_value(k, v)])
 
-    # Create Instrumentation Library
-    my_instrumentation_library_spans.instrumentation_library.name = 'otel'
-    my_instrumentation_library_spans.instrumentation_library.version = '1234'
-    
-    # Add Spans to Instrumentation Library Spans
-    my_instrumentation_library_spans.spans.extend([my_span])
+        # Create Instrumentation Library
+        self.instrumentation_library_spans.instrumentation_library.name = 'OpenTelemetry Custom'
+        self.instrumentation_library_spans.instrumentation_library.version = '0.1'
+      
+        # Add Spans to Instrumentation Library Spans
+        self.instrumentation_library_spans.spans.extend([self.span])
 
+        # Add Resource Attributes to my_resource_spans
+        if not self.resource_attributes is None:
+            for k, v in self.resource_attributes.items():
+                self.resource_spans.resource.attributes.extend([self.create_key_value(k, v)])
+        self.resource_spans.instrumentation_library_spans.extend([self.instrumentation_library_spans])
+        self.trace_data.resource_spans.extend([self.resource_spans])
+        return self.trace_data
 
-def create_trace(trace_name, start_time_unix_nano, end_time_unix_nano, span_attributes, resource_attributes):
-    # Add Instrumentation Library Info/Spans
-    create_instrumentation_library_spans(trace_name, start_time_unix_nano, end_time_unix_nano, span_attributes)
-    
-    # Add Resource Attributes to my_resource_spans
-    if not resource_attributes is None:
-        for k, v in resource_attributes.items():
-            create_resource_attribute(k, v)
-    my_resource_spans.instrumentation_library_spans.extend([my_instrumentation_library_spans])
-    my_trace_data.resource_spans.extend([my_resource_spans])
-    #print(my_trace_data)
-    #print(my_trace_data.SerializeToString())
-    return my_trace_data
-
-def record(trace_name, start_time_unix_nano, end_time_unix_nano, span_attributes = None, resource_attributes = None):
-    with grpc.insecure_channel('localhost:4317') as channel:
-        try:
-            stub = trace_service_pb2_grpc.TraceServiceStub(channel)
-            response = stub.Export(create_trace(trace_name, start_time_unix_nano, end_time_unix_nano, span_attributes, resource_attributes))
-        except:
-            print("Error connecting to GRPC Endpoint.")
-        finally:
-            print("Data Sent.")
-            my_span.Clear()
-            my_span_attribute.Clear()
-            my_resource_attribute.Clear()
-
-if __name__ == '__main__':
-    record()
-
-#create_trace(trace_name='test', start_time_unix_nano = int(time.time()*1000000000), end_time_unix_nano = int(time.time()*1000000000), span_attributes={'hello':'world','foo':'bar'}, resource_attributes={'hello':'world','foo':'bar'})
+    def record(self):
+        with grpc.insecure_channel(self.otlp_endpoint) as channel:
+            try:
+                stub = trace_service_pb2_grpc.TraceServiceStub(channel)
+                response = stub.Export(self.create_trace())
+            except:
+                print("Error connecting to GRPC Endpoint.")
+            finally:
+                print("Data Sent.")
