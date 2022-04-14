@@ -20,19 +20,6 @@ class Trace:
         if 'OTLP_ENDPOINT' in os.environ:
             self.otlp_endpoint = os.environ["OTLP_ENDPOINT"]
 
-    def __del__(self):
-        self.name = None
-        self.start_time = None
-        self.end_time = None
-        self.span_attributes = None
-        self.resource_attributes = None
-        self.resource_spans = None
-        self.instrumentation_library_spans = None
-        self.span = None
-        self.trace_data = None
-        self.key_value = None
-        self.otlp_endpoint = None
-
     def create_key_value(self, key, value):  
         '''Create Key Value Pair'''
         self.key_value.key = key
