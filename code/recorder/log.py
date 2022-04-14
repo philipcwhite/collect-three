@@ -18,17 +18,6 @@ class Log:
         
         if 'OTLP_ENDPOINT' in os.environ:
             self.otlp_endpoint = os.environ["OTLP_ENDPOINT"]
-        
-    def __del__(self):
-        self.severity = None
-        self.body = None
-        self.log_attributes = None
-        self.resource_attributes = None
-        self.instrumentation_library_logs = None
-        self.log_record = None
-        self.logs_data = None
-        self.resource_logs = None
-        self.key_value = None
     
     def create_key_value(self, key, value):  
         '''Create Key Value Pair'''
