@@ -20,21 +20,7 @@ class Metric:
         
         if 'OTLP_ENDPOINT' in os.environ:
             self.otlp_endpoint = os.environ["OTLP_ENDPOINT"]
-    
-    def __del__(self):
-        self.name = None
-        self.description = None
-        self.unit = None
-        self.value = None
-        self.resource_attributes = None
-        self.metrics_data = None
-        self.resource_metrics = None
-        self.instrumentation_library_metrics = None
-        self.metric = None
-        self.number_data_point = None
-        self.key_value = None
-        self.otlp_endpoint = None
-
+  
     def create_key_value(self, key, value):  
         '''Create Key Value Pair'''
         self.key_value.key = key
